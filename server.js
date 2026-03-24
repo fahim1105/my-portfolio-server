@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 import authRoutes from './routes/auth.js';
 import changePasswordRoutes from './routes/changePassword.js';
@@ -13,6 +14,7 @@ import profileRoutes from './routes/profile.js';
 import messageRoutes from './routes/messages.js';
 import seoRoutes from './routes/seo.js';
 import analyticsRoutes from './routes/analytics.js';
+import Admin from './models/Admin.js';
 
 dotenv.config();
 
@@ -41,8 +43,19 @@ app.get('/', (req, res) => res.json({ status: 'Portfolio API running' }));
 // Connect to MongoDB and start server
 mongoose
     .connect(process.env.MONGO_URI)
-    .then(() => {
+    .then(async () => {
         console.log('✅ MongoDB connected');
+
+        // Seed admin from env if not exists in DB
+        const existing = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
+        if (!existing) {
+            const hash = process.env.ADMIN_PASSWORD_HASH
+                ? process.env.ADMIN_PASSWORD_HASH
+                : await bcrypt.hash(process.env.ADMIN_PASSWORD || 'changeme123', 12);
+            await Admin.create({ email: process.env.ADMIN_EMAIL, passwordHash: hash });
+            console.log('✅ Admin seeded from env');
+        }
+
         app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
     })
     .catch((err) => {
