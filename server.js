@@ -56,7 +56,20 @@ mongoose
             console.log('✅ Admin seeded from env');
         }
 
-        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+
+            // Keep-alive: ping self every 10 minutes so Render free tier doesn't sleep
+            const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+            setInterval(async () => {
+                try {
+                    const res = await fetch(`${SELF_URL}/`);
+                    console.log(`🏓 Keep-alive ping OK [${res.status}]`);
+                } catch (err) {
+                    console.warn('⚠️ Keep-alive ping failed:', err.message);
+                }
+            }, 10 * 60 * 1000); // every 10 minutes
+        });
     })
     .catch((err) => {
         console.error('❌ MongoDB connection error:', err.message);
