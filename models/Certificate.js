@@ -6,6 +6,7 @@ const certificateSchema = new mongoose.Schema(
         issuer: { type: String, required: true },
         description: { type: String, default: '' },
         imageURL: { type: String, default: '' },
+        order: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

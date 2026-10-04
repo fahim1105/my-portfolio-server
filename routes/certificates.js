@@ -7,8 +7,23 @@ const router = express.Router();
 // GET all (public)
 router.get('/', async (req, res) => {
     try {
-        const certs = await Certificate.find().sort({ createdAt: -1 });
+        const certs = await Certificate.find().sort({ order: 1, createdAt: -1 });
         res.json(certs);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// PATCH bulk reorder (protected) — body: [{ _id, order }, ...]
+router.patch('/reorder', verifyToken, async (req, res) => {
+    try {
+        const updates = req.body;
+        await Promise.all(
+            updates.map(({ _id, order }) =>
+                Certificate.findByIdAndUpdate(_id, { order })
+            )
+        );
+        res.json({ message: 'Reordered successfully' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
